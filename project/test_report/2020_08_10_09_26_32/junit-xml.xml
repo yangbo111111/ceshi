@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite errors="0" failures="2" hostname="LAPTOP-S6QJCES5" name="pytest" skipped="2" tests="8" time="98.381" timestamp="2020-08-10T09:26:32.208007"><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="8" name="test_init" time="29.388"></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="18" name="test_01" time="0.999"></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="32" name="test_02" time="6.150"></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="62" name="test_03" time="18.270"></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="91" name="test_04" time="0.016"><failure message="AttributeError: &apos;WebDriver&apos; object has no attribute &apos;window_hxandles&apos;">browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;
+
+    @pytest.mark.dependency(depends=[&quot;test_01&quot;])
+    def test_04(browser):
+        &quot;&quot;&quot;
+        修改汇报页面校验
+        步骤：1、点击修改按钮,检验标题元素是否存在
+        &quot;&quot;&quot;
+        user = mycsv()
+        title = user.read(3, 0)
+        content = user.read(3, 1)
+        page = Reportpage(browser)
+        # 如果页面出错，关闭新增页面
+        try:
+&gt;           report_modify(browser, title, content, 0)
+
+test_case\report\test_1_report.py:104: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, title = &apos;自动化汇报修改&apos;, content = &apos;自动化修改内容&apos;, status = 0
+
+    def report_modify(browser,title,content,status):
+        &quot;&quot;&quot;
+                修改汇报，browser：对象、title：汇报标题、content：汇报内容、status:0 点击修改   1 修改保存
+         &quot;&quot;&quot;
+        page = Reportpage(browser)
+        now_handle = browser.current_window_handle
+&gt;       page.list_modifybutton.click()
+
+test_function\report\report_function.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A08037C0&gt;
+
+    def click(self):
+        &quot;&quot;&quot;Clicks the element.&quot;&quot;&quot;
+&gt;       elem = self.__get_element(self.k, self.v)
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:392: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A08037C0&gt;, by = &apos;xpath&apos;, value = &apos;//tr[1]//td[8]//a[1]//img[]&apos;
+
+    def __get_element(self, by, value):
+        &quot;&quot;&quot;
+        Judge element positioning way, and returns the element.
+        &quot;&quot;&quot;
+    
+        # selenium
+        if by == &quot;id_&quot;:
+            self.__find_element((By.ID, value))
+            elem = Browser.driver.find_elements_by_id(value)[self.index]
+        elif by == &quot;name&quot;:
+            self.__find_element((By.NAME, value))
+            elem = Browser.driver.find_elements_by_name(value)[self.index]
+        elif by == &quot;class_name&quot;:
+            self.__find_element((By.CLASS_NAME, value))
+            elem = Browser.driver.find_elements_by_class_name(value)[self.index]
+        elif by == &quot;tag&quot;:
+            self.__find_element((By.TAG_NAME, value))
+            elem = Browser.driver.find_elements_by_tag_name(value)[self.index]
+        elif by == &quot;link_text&quot;:
+            self.__find_element((By.LINK_TEXT, value))
+            elem = Browser.driver.find_elements_by_link_text(value)[self.index]
+        elif by == &quot;partial_link_text&quot;:
+            self.__find_element((By.PARTIAL_LINK_TEXT, value))
+            elem = Browser.driver.find_elements_by_partial_link_text(value)[self.index]
+        elif by == &quot;xpath&quot;:
+&gt;           self.__find_element((By.XPATH, value))
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A08037C0&gt;, elem = (&apos;xpath&apos;, &apos;//tr[1]//td[8]//a[1]//img[]&apos;)
+
+    def __find_element(self, elem):
+        &quot;&quot;&quot;
+        Find if the element exists.
+        &quot;&quot;&quot;
+        for i in range(self.timeout):
+&gt;           elems = Browser.driver.find_elements(by=elem[0], value=elem[1])
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:274: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, by = &apos;xpath&apos;, value = &apos;//tr[1]//td[8]//a[1]//img[]&apos;
+
+    def find_elements(self, by=By.ID, value=None):
+        &quot;&quot;&quot;
+        Find elements given a By strategy and locator. Prefer the find_elements_by_* methods when
+        possible.
+    
+        :Usage:
+            elements = driver.find_elements(By.CLASS_NAME, &apos;foo&apos;)
+    
+        :rtype: list of WebElement
+        &quot;&quot;&quot;
+        if self.w3c:
+            if by == By.ID:
+                by = By.CSS_SELECTOR
+                value = &apos;[id=&quot;%s&quot;]&apos; % value
+            elif by == By.TAG_NAME:
+                by = By.CSS_SELECTOR
+            elif by == By.CLASS_NAME:
+                by = By.CSS_SELECTOR
+                value = &quot;.%s&quot; % value
+            elif by == By.NAME:
+                by = By.CSS_SELECTOR
+                value = &apos;[name=&quot;%s&quot;]&apos; % value
+    
+        # Return empty list if driver returns null
+        # See https://github.com/SeleniumHQ/selenium/issues/4555
+&gt;       return self.execute(Command.FIND_ELEMENTS, {
+            &apos;using&apos;: by,
+            &apos;value&apos;: value})[&apos;value&apos;] or []
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\selenium\webdriver\remote\webdriver.py:1005: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, driver_command = &apos;findElements&apos;, params = {&apos;using&apos;: &apos;xpath&apos;, &apos;value&apos;: &apos;//tr[1]//td[8]//a[1]//img[]&apos;}
+
+    def execute(self, driver_command, params=None):
+        &quot;&quot;&quot;
+        Sends a command to be executed by a command.CommandExecutor.
+    
+        :Args:
+         - driver_command: The name of the command to execute as a string.
+         - params: A dictionary of named parameters to send with the command.
+    
+        :Returns:
+          The command&apos;s JSON response loaded into a dictionary object.
+        &quot;&quot;&quot;
+        if self.session_id is not None:
+            if not params:
+                params = {&apos;sessionId&apos;: self.session_id}
+            elif &apos;sessionId&apos; not in params:
+                params[&apos;sessionId&apos;] = self.session_id
+    
+        params = self._wrap_value(params)
+        response = self.command_executor.execute(driver_command, params)
+        if response:
+&gt;           self.error_handler.check_response(response)
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\selenium\webdriver\remote\webdriver.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;selenium.webdriver.remote.errorhandler.ErrorHandler object at 0x00000231A087DFA0&gt;
+response = {&apos;status&apos;: 400, &apos;value&apos;: &apos;{&quot;value&quot;:{&quot;error&quot;:&quot;invalid selector&quot;,&quot;message&quot;:&quot;invalid selector: Unable to locate an elemen...\n\\tRtlGetAppContainerNamedObjectPath [0x77787C24+228]\\n\\tRtlGetAppContainerNamedObjectPath [0x77787BF4+180]\\n&quot;}}&apos;}
+
+    def check_response(self, response):
+        &quot;&quot;&quot;
+        Checks that a JSON response from the WebDriver does not have an error.
+    
+        :Args:
+         - response - The JSON response from the WebDriver server as a dictionary
+           object.
+    
+        :Raises: If the response contains an error message.
+        &quot;&quot;&quot;
+        status = response.get(&apos;status&apos;, None)
+        if status is None or status == ErrorCode.SUCCESS:
+            return
+        value = None
+        message = response.get(&quot;message&quot;, &quot;&quot;)
+        screen = response.get(&quot;screen&quot;, &quot;&quot;)
+        stacktrace = None
+        if isinstance(status, int):
+            value_json = response.get(&apos;value&apos;, None)
+            if value_json and isinstance(value_json, basestring):
+                import json
+                try:
+                    value = json.loads(value_json)
+                    if len(value.keys()) == 1:
+                        value = value[&apos;value&apos;]
+                    status = value.get(&apos;error&apos;, None)
+                    if status is None:
+                        status = value[&quot;status&quot;]
+                        message = value[&quot;value&quot;]
+                        if not isinstance(message, basestring):
+                            value = message
+                            message = message.get(&apos;message&apos;)
+                    else:
+                        message = value.get(&apos;message&apos;, None)
+                except ValueError:
+                    pass
+    
+        exception_class = ErrorInResponseException
+        if status in ErrorCode.NO_SUCH_ELEMENT:
+            exception_class = NoSuchElementException
+        elif status in ErrorCode.NO_SUCH_FRAME:
+            exception_class = NoSuchFrameException
+        elif status in ErrorCode.NO_SUCH_WINDOW:
+            exception_class = NoSuchWindowException
+        elif status in ErrorCode.STALE_ELEMENT_REFERENCE:
+            exception_class = StaleElementReferenceException
+        elif status in ErrorCode.ELEMENT_NOT_VISIBLE:
+            exception_class = ElementNotVisibleException
+        elif status in ErrorCode.INVALID_ELEMENT_STATE:
+            exception_class = InvalidElementStateException
+        elif status in ErrorCode.INVALID_SELECTOR \
+                or status in ErrorCode.INVALID_XPATH_SELECTOR \
+                or status in ErrorCode.INVALID_XPATH_SELECTOR_RETURN_TYPER:
+            exception_class = InvalidSelectorException
+        elif status in ErrorCode.ELEMENT_IS_NOT_SELECTABLE:
+            exception_class = ElementNotSelectableException
+        elif status in ErrorCode.ELEMENT_NOT_INTERACTABLE:
+            exception_class = ElementNotInteractableException
+        elif status in ErrorCode.INVALID_COOKIE_DOMAIN:
+            exception_class = InvalidCookieDomainException
+        elif status in ErrorCode.UNABLE_TO_SET_COOKIE:
+            exception_class = UnableToSetCookieException
+        elif status in ErrorCode.TIMEOUT:
+            exception_class = TimeoutException
+        elif status in ErrorCode.SCRIPT_TIMEOUT:
+            exception_class = TimeoutException
+        elif status in ErrorCode.UNKNOWN_ERROR:
+            exception_class = WebDriverException
+        elif status in ErrorCode.UNEXPECTED_ALERT_OPEN:
+            exception_class = UnexpectedAlertPresentException
+        elif status in ErrorCode.NO_ALERT_OPEN:
+            exception_class = NoAlertPresentException
+        elif status in ErrorCode.IME_NOT_AVAILABLE:
+            exception_class = ImeNotAvailableException
+        elif status in ErrorCode.IME_ENGINE_ACTIVATION_FAILED:
+            exception_class = ImeActivationFailedException
+        elif status in ErrorCode.MOVE_TARGET_OUT_OF_BOUNDS:
+            exception_class = MoveTargetOutOfBoundsException
+        elif status in ErrorCode.JAVASCRIPT_ERROR:
+            exception_class = JavascriptException
+        elif status in ErrorCode.SESSION_NOT_CREATED:
+            exception_class = SessionNotCreatedException
+        elif status in ErrorCode.INVALID_ARGUMENT:
+            exception_class = InvalidArgumentException
+        elif status in ErrorCode.NO_SUCH_COOKIE:
+            exception_class = NoSuchCookieException
+        elif status in ErrorCode.UNABLE_TO_CAPTURE_SCREEN:
+            exception_class = ScreenshotException
+        elif status in ErrorCode.ELEMENT_CLICK_INTERCEPTED:
+            exception_class = ElementClickInterceptedException
+        elif status in ErrorCode.INSECURE_CERTIFICATE:
+            exception_class = InsecureCertificateException
+        elif status in ErrorCode.INVALID_COORDINATES:
+            exception_class = InvalidCoordinatesException
+        elif status in ErrorCode.INVALID_SESSION_ID:
+            exception_class = InvalidSessionIdException
+        elif status in ErrorCode.UNKNOWN_METHOD:
+            exception_class = UnknownMethodException
+        else:
+            exception_class = WebDriverException
+        if value == &apos;&apos; or value is None:
+            value = response[&apos;value&apos;]
+        if isinstance(value, basestring):
+            if exception_class == ErrorInResponseException:
+                raise exception_class(response, value)
+            raise exception_class(value)
+        if message == &quot;&quot; and &apos;message&apos; in value:
+            message = value[&apos;message&apos;]
+    
+        screen = None
+        if &apos;screen&apos; in value:
+            screen = value[&apos;screen&apos;]
+    
+        stacktrace = None
+        if &apos;stackTrace&apos; in value and value[&apos;stackTrace&apos;]:
+            stacktrace = []
+            try:
+                for frame in value[&apos;stackTrace&apos;]:
+                    line = self._value_or_default(frame, &apos;lineNumber&apos;, &apos;&apos;)
+                    file = self._value_or_default(frame, &apos;fileName&apos;, &apos;&lt;anonymous&gt;&apos;)
+                    if line:
+                        file = &quot;%s:%s&quot; % (file, line)
+                    meth = self._value_or_default(frame, &apos;methodName&apos;, &apos;&lt;anonymous&gt;&apos;)
+                    if &apos;className&apos; in frame:
+                        meth = &quot;%s.%s&quot; % (frame[&apos;className&apos;], meth)
+                    msg = &quot;    at %s (%s)&quot;
+                    msg = msg % (meth, file)
+                    stacktrace.append(msg)
+            except TypeError:
+                pass
+        if exception_class == ErrorInResponseException:
+            raise exception_class(response, message)
+        elif exception_class == UnexpectedAlertPresentException:
+            alert_text = None
+            if &apos;data&apos; in value:
+                alert_text = value[&apos;data&apos;].get(&apos;text&apos;)
+            elif &apos;alert&apos; in value:
+                alert_text = value[&apos;alert&apos;].get(&apos;text&apos;)
+            raise exception_class(message, screen, stacktrace, alert_text)
+&gt;       raise exception_class(message, screen, stacktrace)
+E       selenium.common.exceptions.InvalidSelectorException: Message: invalid selector: Unable to locate an element with the xpath expression //tr[1]//td[8]//a[1]//img[] because of the following error:
+E       SyntaxError: Failed to execute &apos;evaluate&apos; on &apos;Document&apos;: The string &apos;//tr[1]//td[8]//a[1]//img[]&apos; is not a valid XPath expression.
+E         (Session info: chrome=84.0.4147.105)
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\selenium\webdriver\remote\errorhandler.py:242: InvalidSelectorException
+
+During handling of the above exception, another exception occurred:
+
+browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;
+
+    @pytest.mark.dependency(depends=[&quot;test_01&quot;])
+    def test_04(browser):
+        &quot;&quot;&quot;
+        修改汇报页面校验
+        步骤：1、点击修改按钮,检验标题元素是否存在
+        &quot;&quot;&quot;
+        user = mycsv()
+        title = user.read(3, 0)
+        content = user.read(3, 1)
+        page = Reportpage(browser)
+        # 如果页面出错，关闭新增页面
+        try:
+            report_modify(browser, title, content, 0)
+            if page.report_title.is_displayed():
+                result = True
+            else:
+                result = False
+                browser.close()
+            # 切换回列表页面
+            windowsOption(browser).tratoframe(now)
+            time.sleep(2)
+        # 页面出错，关闭除列表页面的所有页面
+        except NoSuchElementException:
+&gt;           except_option(browser,now)
+
+test_case\report\test_1_report.py:115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+object1 = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, now1 = &apos;CDwindow-FAD870CC367E16FC154C30C3788875BB&apos;
+
+    def except_option(object1, now1):
+        &quot;&quot;&quot;
+        如果页面异常，则关闭非当前浏览器以外窗口
+        &quot;&quot;&quot;
+&gt;       drivers = object1.window_hxandles
+E       AttributeError: &apos;WebDriver&apos; object has no attribute &apos;window_hxandles&apos;
+
+test_function\report\report_function.py:104: AttributeError</failure></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="119" name="test_05" time="0.000"><skipped message="test_05 depends on test_04" type="pytest.skip">C:\Users\86158\AppData\Roaming\Python\Python38\site-packages\pytest_dependency.py:103: test_05 depends on test_04</skipped></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="143" name="test_06" time="33.238"><failure message="AttributeError: &apos;WebDriver&apos; object has no attribute &apos;window_hxandles&apos;">browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;
+
+    @pytest.mark.dependency(depends=[&quot;test_03&quot;])
+    def test_06(browser):
+        &quot;&quot;&quot;
+        查询校验
+        步骤：1、输入查询内容
+            2、点击立即查找按钮
+            3、校验查询出的数据
+        &quot;&quot;&quot;
+        user = mycsv()
+        title = user.read(3, 0)
+        page = Reportpage(browser)
+        try:
+&gt;           title_query=report_query(browser,title)
+
+test_case\report\test_1_report.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, title = &apos;自动化汇报修改&apos;
+
+    def report_query(browser,title):
+        &quot;&quot;&quot;
+                查询汇报，browser：对象、title：汇报标题
+        &quot;&quot;&quot;
+        page = Reportpage(browser)
+        page.list_title_query.send_keys(title)
+        page.query_button.click()
+        time.sleep(1)
+&gt;       query_title = page.list_frist_title.text
+
+test_function\report\report_function.py:84: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A086D070&gt;
+
+    @property
+    def text(self):
+        &quot;&quot;&quot;Clears the text if it&apos;s a text entry element.&quot;&quot;&quot;
+&gt;       elem = self.__get_element(self.k, self.v)
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:411: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A086D070&gt;, by = &apos;xpath&apos;, value = &quot;//*[@id=&apos;itemContainer&apos;]/tr[1]/td[3]/a&quot;
+
+    def __get_element(self, by, value):
+        &quot;&quot;&quot;
+        Judge element positioning way, and returns the element.
+        &quot;&quot;&quot;
+    
+        # selenium
+        if by == &quot;id_&quot;:
+            self.__find_element((By.ID, value))
+            elem = Browser.driver.find_elements_by_id(value)[self.index]
+        elif by == &quot;name&quot;:
+            self.__find_element((By.NAME, value))
+            elem = Browser.driver.find_elements_by_name(value)[self.index]
+        elif by == &quot;class_name&quot;:
+            self.__find_element((By.CLASS_NAME, value))
+            elem = Browser.driver.find_elements_by_class_name(value)[self.index]
+        elif by == &quot;tag&quot;:
+            self.__find_element((By.TAG_NAME, value))
+            elem = Browser.driver.find_elements_by_tag_name(value)[self.index]
+        elif by == &quot;link_text&quot;:
+            self.__find_element((By.LINK_TEXT, value))
+            elem = Browser.driver.find_elements_by_link_text(value)[self.index]
+        elif by == &quot;partial_link_text&quot;:
+            self.__find_element((By.PARTIAL_LINK_TEXT, value))
+            elem = Browser.driver.find_elements_by_partial_link_text(value)[self.index]
+        elif by == &quot;xpath&quot;:
+&gt;           self.__find_element((By.XPATH, value))
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;poium.page_objects.NewPageElement object at 0x00000231A086D070&gt;, elem = (&apos;xpath&apos;, &quot;//*[@id=&apos;itemContainer&apos;]/tr[1]/td[3]/a&quot;)
+
+    def __find_element(self, elem):
+        &quot;&quot;&quot;
+        Find if the element exists.
+        &quot;&quot;&quot;
+        for i in range(self.timeout):
+            elems = Browser.driver.find_elements(by=elem[0], value=elem[1])
+            if len(elems) == 1:
+                logging.info(&quot;✅ Find element: {by}={value} &quot;.format(
+                    by=elem[0], value=elem[1]))
+                break
+            elif len(elems) &gt; 1:
+                logging.info(&quot;❓ Find {n} elements through: {by}={value}&quot;.format(
+                    n=len(elems), by=elem[0], value=elem[1]))
+                break
+            else:
+                sleep(1)
+        else:
+            error_msg = &quot;❌ Find 0 elements through: {by}={value}&quot;.format(by=elem[0], value=elem[1])
+            logging.error(error_msg)
+&gt;           raise NoSuchElementException(error_msg)
+E           selenium.common.exceptions.NoSuchElementException: Message: ❌ Find 0 elements through: xpath=//*[@id=&apos;itemContainer&apos;]/tr[1]/td[3]/a
+
+C:\Users\86158\AppData\Local\Programs\Python\Python38\lib\site-packages\poium\page_objects.py:288: NoSuchElementException
+
+During handling of the above exception, another exception occurred:
+
+browser = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;
+
+    @pytest.mark.dependency(depends=[&quot;test_03&quot;])
+    def test_06(browser):
+        &quot;&quot;&quot;
+        查询校验
+        步骤：1、输入查询内容
+            2、点击立即查找按钮
+            3、校验查询出的数据
+        &quot;&quot;&quot;
+        user = mycsv()
+        title = user.read(3, 0)
+        page = Reportpage(browser)
+        try:
+            title_query=report_query(browser,title)
+            page.eliminate_button.click()
+        except NoSuchElementException:
+&gt;           except_option(browser,now)
+
+test_case\report\test_1_report.py:159: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+object1 = &lt;selenium.webdriver.chrome.webdriver.WebDriver (session=&quot;cb9272fad351e24a1c3b72159d48d348&quot;)&gt;, now1 = &apos;CDwindow-FAD870CC367E16FC154C30C3788875BB&apos;
+
+    def except_option(object1, now1):
+        &quot;&quot;&quot;
+        如果页面异常，则关闭非当前浏览器以外窗口
+        &quot;&quot;&quot;
+&gt;       drivers = object1.window_hxandles
+E       AttributeError: &apos;WebDriver&apos; object has no attribute &apos;window_hxandles&apos;
+
+test_function\report\report_function.py:104: AttributeError</failure></testcase><testcase classname="test_case.report.test_1_report" file="test_case\report\test_1_report.py" line="163" name="test_07" time="2.119"><skipped message="test_07 depends on test_06" type="pytest.skip">C:\Users\86158\AppData\Roaming\Python\Python38\site-packages\pytest_dependency.py:103: test_07 depends on test_06</skipped></testcase></testsuite></testsuites>

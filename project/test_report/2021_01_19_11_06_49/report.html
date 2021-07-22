@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+    <style>body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	/* do not increase min-width as some may use split screens */
+	min-width: 800px;
+	color: #999;
+}
+
+h1 {
+	font-size: 24px;
+	color: black;
+}
+
+h2 {
+	font-size: 16px;
+	color: black;
+}
+
+p {
+    color: black;
+}
+
+a {
+	color: #999;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+
+#environment td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+}
+
+#environment tr:nth-child(odd) {
+	background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed, .passed .col-result {
+	color: green;
+}
+span.skipped, span.xfailed, span.rerun, .skipped .col-result, .xfailed .col-result, .rerun .col-result {
+	color: orange;
+}
+span.error, span.failed, span.xpassed, .error .col-result, .failed .col-result, .xpassed .col-result  {
+	color: red;
+}
+
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+
+#results-table {
+	border: 1px solid #e6e6e6;
+	color: #999;
+	font-size: 12px;
+	width: 100%
+}
+
+#results-table th, #results-table td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+	text-align: left
+}
+#results-table th {
+	font-weight: bold
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+
+.log:only-child {
+	height: inherit
+}
+.log {
+	background-color: #e6e6e6;
+	border: 1px solid #e6e6e6;
+	color: black;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	height: 230px;
+	overflow-y: scroll;
+	padding: 5px;
+	white-space: pre-wrap
+}
+div.image {
+	border: 1px solid #e6e6e6;
+	float: right;
+	height: 240px;
+	margin-left: 5px;
+	overflow: hidden;
+	width: 320px
+}
+div.image img {
+	width: 320px
+}
+div.video {
+	border: 1px solid #e6e6e6;
+	float: right;
+	height: 240px;
+	margin-left: 5px;
+	overflow: hidden;
+	width: 320px
+}
+div.video video {
+	overflow: hidden;
+	width: 320px;
+    height: 240px;
+}
+.collapsed {
+	display: none;
+}
+.expander::after {
+	content: " (show details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+.collapser::after {
+	content: " (hide details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+	cursor: pointer;
+}
+
+.sort-icon {
+	font-size: 0px;
+	float: left;
+	margin-right: 5px;
+	margin-top: 5px;
+	/*triangle*/
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+}
+
+.inactive .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #E6E6E6;
+}
+
+.asc.active .sort-icon {
+	/*finish triangle*/
+	border-bottom: 8px solid #999;
+}
+
+.desc.active .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #999;
+}
+</style></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (extras.classList.contains("collapsed")) {
+            expandcollapse.classList.add("expander")
+        } else if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    sort_column(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+
+        if (key_a == key_b) return 0;
+
+        if (reversed) {
+            return (key_a < key_b ? 1 : -1);
+        } else {
+            return (key_a > key_b ? 1 : -1);
+        }
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>report.html</h1>
+    <p>Report generated on 19-Jan-2021 at 11:12:29 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v2.1.1</p>
+    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>JAVA_HOME</td>
+        <td>D:\java\jdk-14;D:\java\jdk-8;</td></tr>
+      <tr>
+        <td>Packages</td>
+        <td>{"pluggy": "0.13.1", "py": "1.9.0", "pytest": "6.0.1"}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Windows-10-10.0.18362-SP0</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{"assume": "2.2.1", "dependency": "0.5.1", "html": "2.1.1", "metadata": "1.10.0", "ordering": "0.6", "rerunfailures": "9.0"}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.8.1</td></tr></table>
+    <h2>Summary</h2>
+    <p>42 tests ran in 339.52 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">42 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>, <input checked="true" class="filter" data-test-result="rerun" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="rerun">0 rerun</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th>Description</th>
+          <th class="sortable numeric" col="duration">Duration</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_01</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    ======字段管理菜单开始测试.....=======</p>
+                <p>    字段管理页面校验</p>
+                <p>        步骤：1、登录系统，进入后台/内容中心/字段管理</p>
+                <p>            2、页面元素校验</p>
+                <p>        预期：</p>
+                <p>            1、进入字段管理菜单</p>
+                <p>            2、页面元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">21.39</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 3 elements through: name=username[0m
+INFO     poium:logging.py:18 [32mINFO clear element: 用户名输入框[0m
+INFO     poium:logging.py:18 [32mINFO ❓ Find 3 elements through: name=username[0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 用户名输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=password [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 账号输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=password [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 账号输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;container&#x27;]/div[3]/div/div[1]/div[2]/form/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 登录按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;dropdown-toggle user-menu&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 右上角头像[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;right clearfix&#x27;]//li[4]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 进入后台[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=402887f859b694e00159b699ab6e0001 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 内容中心菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=字段管理 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 字段管理菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_02</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新建数据表页面校验</p>
+                <p>        步骤：1、点击新建按钮</p>
+                <p>            2、检查数据表名称元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出新建数据表页面</p>
+                <p>            2、页面元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.30</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;btn btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;addModal&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_03</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新建频道模板校验</p>
+                <p>        步骤：1、点击新建按钮</p>
+                <p>            2、输入数据表名称、系统名称，点击保存按钮</p>
+                <p>            3、判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、弹出新建数据表页面</p>
+                <p>            2、保存成功</p>
+                <p>            3、数据表名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">9.46</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;btn btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblName&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 系统名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;select_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 下拉按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;select_cate_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择内容管理[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;addModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_04</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    编辑数据表页面校验</p>
+                <p>        步骤：1、点击编辑按钮</p>
+                <p>            2、检查数据表名称元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出编辑数据表页面</p>
+                <p>            2、页面元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">4.43</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;contentEditModal&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_05</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    编辑数据表校验</p>
+                <p>        步骤：1、点击编辑按钮</p>
+                <p>            2、输入数据表名称，点击保存按钮</p>
+                <p>            3、判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、弹出编辑数据表页面</p>
+                <p>            2、保存成功</p>
+                <p>            3、数据表名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">7.40</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;contentEditModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_06</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查看数据表校验</p>
+                <p>        步骤：1、点击数据表名称</p>
+                <p>            2、获取数据表名称，判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、弹出查看字段页面</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.26</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一条记录[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;viewModal&#x27;]//div[1]//div[1]//p[1] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;modal-scrollable&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_07</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查询数据表校验</p>
+                <p>        步骤：1、输入数据表名称，点击搜索按钮</p>
+                <p>            2、判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、搜索成功</p>
+                <p>            2、数据表名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">6.17</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_09</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    复制数据表校验</p>
+                <p>        步骤：1、点击复制按钮</p>
+                <p>            2、输入数据表名称，点击保存按钮</p>
+                <p>            3、判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、弹出复制数据表页面</p>
+                <p>            2、保存成功</p>
+                <p>            3、数据表名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">12.71</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[3] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 复制按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblName&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 系统名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblName&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 系统名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;contentEditModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_11</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    删除数据表校验</p>
+                <p>        步骤：1、点击删除按钮，删除数据表</p>
+                <p>            2、判断数据表是否被删除</p>
+                <p>        预期：</p>
+                <p>            1、数据表被删除</p>
+                <p>            2、数据表删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">10.28</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[5] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[@class=&#x27;no-records-found&#x27;]//span[@class=&#x27;i18n&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_12</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量删除数据表校验</p>
+                <p>        步骤：1、点击删除按钮，删除数据表</p>
+                <p>            2、判断数据表是否被删除</p>
+                <p>        预期：</p>
+                <p>            1、数据表被删除</p>
+                <p>            2、数据表删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">9.40</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入数据表或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@name=&#x27;btSelectAll&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 全选框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量删除 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[@class=&#x27;no-records-found&#x27;]//span[@class=&#x27;i18n&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_13</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    字段设置页面校验</p>
+                <p>        步骤：1、新建数据表</p>
+                <p>            2、点击字段设置按钮</p>
+                <p>            3、判断批量新增按钮是否存在</p>
+                <p>        预期：</p>
+                <p>            1、新增成功</p>
+                <p>            2、进入字段设置页面</p>
+                <p>            3、批量新增按钮存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">11.84</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 2 elements through: link text=字段管理[0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 字段管理菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;btn btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblNameCn&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 数据表名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;tblName&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 系统名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;select_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 下拉按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;select_cate_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择内容管理[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;addModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[4] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 字段设置按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量新建 [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_14</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新增字段页面校验</p>
+                <p>        步骤：1、点击新建按钮</p>
+                <p>            2、判断字段名称是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出新建页面</p>
+                <p>            2、字段名称存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.40</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;btn btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=fieldNameCn [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;addModal&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_15</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新增字段校验</p>
+                <p>        步骤：1、点击新建按钮，创建字段</p>
+                <p>            2、判断字段名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、新增成功</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.24</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;btn btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=fieldNameCn [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;addModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_16</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    编辑字段页面校验</p>
+                <p>        步骤：1、点击编辑按钮</p>
+                <p>            2、判断字段名称是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出编辑页面</p>
+                <p>            2、字段名称存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.32</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;operate-btns&#x27;]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=fieldNameCn [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;fieldEditModal&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_17</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    编辑字段校验</p>
+                <p>        步骤：1、点击编辑按钮，编辑字段</p>
+                <p>            2、判断字段名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、编辑成功</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">6.30</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;operate-btns&#x27;]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=fieldNameCn [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=fieldNameCn [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;fieldEditModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_18</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查看字段校验</p>
+                <p>        步骤：1、点击字段名称</p>
+                <p>            2、获取字段名称，判断字段是否正确</p>
+                <p>        预期：</p>
+                <p>            1、弹出查看字段页面</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.25</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一条记录[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;vueFormFieldTbl&#x27;]/div[1]/div[1]/p [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;modal-scrollable&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_19</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查询数据表校验</p>
+                <p>        步骤：1、输入数据表名称，点击搜索按钮</p>
+                <p>            2、判断数据表名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、搜索成功</p>
+                <p>            2、数据表名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.12</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_20</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    属性设置页面校验</p>
+                <p>        步骤：1、点击属性设置按钮</p>
+                <p>            2、判断元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出属性设置页面</p>
+                <p>            2、元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">4.22</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;operate-btns&#x27;]//a[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 属性设置按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;fieldAttrEditModal&#x27;]/div[1]/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;fieldAttrEditModal&#x27;]/div[1]/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_21</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    删除字段校验</p>
+                <p>        步骤：1、点击删除按钮，删除字段</p>
+                <p>            2、判断字段是否被删除</p>
+                <p>        预期：</p>
+                <p>            1、数据表被删除</p>
+                <p>            2、数据表删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">9.26</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;operate-btns&#x27;]//a[3] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[@class=&#x27;no-records-found&#x27;]//span[@class=&#x27;i18n&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-default&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 清除按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_22</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量新增字段页面校验</p>
+                <p>        步骤：1、点击批量新建按钮</p>
+                <p>            2、判断字段名称是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出批量新建页面</p>
+                <p>            2、字段名称存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.32</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量新建 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;1-20个字符，中文/字母/数字/符号&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;batchAddModal&#x27;]/div[1]/span [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_23</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量新增字段校验</p>
+                <p>        步骤：1、点击批量新建按钮，创建字段</p>
+                <p>            2、判断字段名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、新增成功</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.61</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量新建 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;1-20个字符，中文/字母/数字/符号&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;batchAddModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_24</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量编辑字段页面校验</p>
+                <p>        步骤：1、选择数据点击批量修改按钮</p>
+                <p>            2、判断字段名称是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出批量编辑页面</p>
+                <p>            2、字段名称存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">4.49</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[1]//input[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一个选择框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量编辑 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;1-20个字符，中文/字母/数字/符号&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;batchEditModal&#x27;]/div[1]/span [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_25</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量编辑字段校验</p>
+                <p>        步骤：1、点击批量编辑按钮，编辑字段</p>
+                <p>            2、判断字段名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、编辑成功</p>
+                <p>            2、字段名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">6.50</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量编辑 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;1-20个字符，中文/字母/数字/符号&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;1-20个字符，中文/字母/数字/符号&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 字段名称输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;batchEditModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_26</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量删除字段校验</p>
+                <p>        步骤：1、点击删除按钮，删除数据表</p>
+                <p>            2、判断数据表是否被删除</p>
+                <p>        预期：</p>
+                <p>            1、数据表被删除</p>
+                <p>            2、数据表删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">8.32</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;请输入字段或系统名称&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 列表查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@class=&#x27;btn btn-primary mr-5 pull-left ml-15&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 搜索按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@name=&#x27;btSelectAll&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 全选框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量删除 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[@class=&#x27;no-records-found&#x27;]//span[@class=&#x27;i18n&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_10_field_management.py::test_end</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    ======字段管理菜单结束测试.....=======</p>
+                <p></p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">6.09</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 2 elements through: link text=字段管理[0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 字段管理菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[7]//div[1]//a[5] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;dropdown-toggle user-menu&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 右上角头像[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//li[@class=&#x27;ez-person-footer&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 安全退出[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_01</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    ======虚拟栏目菜单开始测试.....=======</p>
+                <p>    频道管理页面校验</p>
+                <p>        步骤：1、登录系统，进入后台/内容中心/虚拟栏目</p>
+                <p>            2、页面元素校验</p>
+                <p>        预期：</p>
+                <p>            1、进入虚拟栏目菜单</p>
+                <p>            2、页面元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">27.46</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 3 elements through: name=username[0m
+INFO     poium:logging.py:18 [32mINFO clear element: 用户名输入框[0m
+INFO     poium:logging.py:18 [32mINFO ❓ Find 3 elements through: name=username[0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 用户名输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=password [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 账号输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=password [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 账号输入框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;container&#x27;]/div[3]/div/div[1]/div[2]/form/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 登录按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=信息 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 信息菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;main-menu-inner&#x27;]/ul/li/ul/li[2]/a/span [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 栏目管理菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;name&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;new-div0&#x27;]//button[@id=&#x27;setAf&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新增保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;dropdown-toggle user-menu&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 右上角头像[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;right clearfix&#x27;]//li[4]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 进入后台[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=402887f859b694e00159b699ab6e0001 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 内容中心菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=虚拟栏目 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 虚拟栏目菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=name [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_02</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新建虚拟栏目校验</p>
+                <p>        步骤：1、输入模板名称、编码，点击保存按钮</p>
+                <p>            2、判断虚拟栏目名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、保存成功</p>
+                <p>            2、虚拟栏目名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">4.18</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=name [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//button[@id=&#x27;setAf&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_03</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查询虚拟栏目校验</p>
+                <p>        步骤：1、输入栏目名称，点击搜索按钮</p>
+                <p>            2、判断栏目名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、搜索成功</p>
+                <p>            2、栏目名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.22</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//i[@class=&#x27;fa fa-search&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 左侧查询按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_04</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    下级栏目页面校验</p>
+                <p>        步骤：1、点击栏目、点击下级栏目</p>
+                <p>            2、判断新建按钮元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、进入新建下级栏目列表</p>
+                <p>            2、新建元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.11</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=vcperTab [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 下级栏目[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@id=&#x27;addNew&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_05</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新建下级虚拟栏目页面校验</p>
+                <p>        步骤：1、点击新建下级虚拟栏目</p>
+                <p>            2、判断栏目名称元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出新增下级虚拟栏目页面</p>
+                <p>            2、栏目名称元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">2.10</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@id=&#x27;addNew&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_06</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    选择关联栏目页面校验</p>
+                <p>        步骤：1、点击新建下级虚拟栏目</p>
+                <p>            2、点击选择关联栏目按钮</p>
+                <p>            3、判断栏目名称元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出新增下级虚拟栏目页面</p>
+                <p>            2、弹出选择关联栏目页面</p>
+                <p>            3、栏目名称元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.18</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div/div/div/div/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择关联栏目按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;searchTreeData&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_07</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    关联栏目查询校验</p>
+                <p>        步骤：1、点击选择关联栏目按钮</p>
+                <p>            2、输入栏目名称查询</p>
+                <p>            3、判断查询结果</p>
+                <p>        预期：</p>
+                <p>            1、弹出新增下级虚拟栏目页面</p>
+                <p>            2、查询成功</p>
+                <p>            3、查询结果正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">8.36</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;searchTreeData&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 栏目查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@id=&#x27;searchTreeData&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;user-add-body&#x27;]//span[@class=&#x27;search-icon&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 查询按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;columnPorleTree_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=/html/body/div[8]/div/div[1]/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 页面关闭按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[1]/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_08</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    新建下级栏目校验</p>
+                <p>        步骤：1、新建下级栏目</p>
+                <p>            2、判断新建栏目名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、新建成功</p>
+                <p>            2、栏目名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">12.51</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@id=&#x27;addNew&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div/div/div/div/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择关联栏目按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;columnPorleTree_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一个栏目[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=/html/body/div[8]/div/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//i[@class=&#x27;fa fa-search&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 左侧查询按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_09</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    修改下级栏目页面校验</p>
+                <p>        步骤：1、点击编辑按钮</p>
+                <p>            2、判断编辑页面元素是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出编辑页面</p>
+                <p>            2、编辑页面元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">4.23</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//td[5]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[1]/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_10</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    编辑下级栏目校验</p>
+                <p>        步骤：1、点击编辑按钮</p>
+                <p>            2、修改栏目名称保存</p>
+                <p>            3、查询栏目是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出编辑页面</p>
+                <p>            2、保存成功</p>
+                <p>            3、栏目名称存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">9.42</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//td[5]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 编辑按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 修改页面栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 修改页面栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//i[@class=&#x27;fa fa-search&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 左侧查询按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_11</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    查看下级栏目校验</p>
+                <p>        步骤：1、新建下级栏目</p>
+                <p>            2、查看栏目名称是否正确</p>
+                <p>        预期：</p>
+                <p>            1、新建成功</p>
+                <p>            2、栏目名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">12.60</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@id=&#x27;addNew&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div/div/div/div/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择关联栏目按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;columnPorleTree_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一个栏目[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=/html/body/div[8]/div/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//tr[1]//td[2]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一条记录[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;form-horizontal ez-form-horizontal&#x27;]//div[1]//div[1]//div[1]//p[1] [0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;viewModal&#x27;]//span[@class=&#x27;modal-close&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 查看页面关闭按钮[0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_12</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量移动栏目页面校验</p>
+                <p>        步骤：1、选择记录，点击批量移动按钮</p>
+                <p>            2、判断查询框是否存在</p>
+                <p>        预期：</p>
+                <p>            1、弹出选择栏目页面</p>
+                <p>            2、查询框元素存在</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.18</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 2 elements through: xpath=//input[@name=&#x27;btSelectItem&#x27;][0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择第一条记录[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[contains(@class,&#x27;btn btn-default&#x27;)] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量移动按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;快速查找栏目&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_13</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量移动栏目查询校验</p>
+                <p>        步骤：1、输入栏目名称查询</p>
+                <p>            2、判断查询结果是否正确</p>
+                <p>        预期：</p>
+                <p>            1、查询成功</p>
+                <p>            2、栏目名称正确</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">5.20</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;快速查找栏目&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@placeholder=&#x27;快速查找栏目&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 查询框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;modal-body thin-scroll&#x27;]//div//span[@class=&#x27;search-icon&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 查询按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;selectTree_1_span&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_14</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量移动栏目校验</p>
+                <p>        步骤：1、选择第一个栏目</p>
+                <p>            2、点击保存按钮</p>
+                <p>        预期：</p>
+                <p>            1、栏目被选中</p>
+                <p>            2、移动成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">3.19</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;selectTree_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一个栏目[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;selectModal&#x27;]//button[@class=&#x27;btn radius btn-primary&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;layui-layer-content layui-layer-padding&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_15</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    删除下级栏目校验</p>
+                <p>        步骤：1、点击删除按钮，删除栏目</p>
+                <p>            2、判断栏目是否被删除</p>
+                <p>        预期：</p>
+                <p>            1、栏目被删除</p>
+                <p>            2、栏目删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">8.33</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@class=&#x27;fixed-table-container&#x27;]//a[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//i[@class=&#x27;fa fa-search&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 左侧查询按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//p[@id=&#x27;isShow_text&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_16</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    批量删除栏目校验</p>
+                <p>        步骤：1、新建下级栏目</p>
+                <p>            2、批量删除栏目</p>
+                <p>        预期：</p>
+                <p>            1、新建成功</p>
+                <p>            2、栏目删除成功</p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">16.89</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@id=&#x27;addNew&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 新建按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div[1]/div[1]/input[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 栏目名称[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//body/div/div/div/div/form/div/div/div/div/span[2] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 选择关联栏目按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//span[@id=&#x27;columnPorleTree_1_span&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 第一个栏目[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=/html/body/div[8]/div/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;editNextModal&#x27;]/div[3]/button [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 保存按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//input[@name=&#x27;btSelectAll&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 全选框[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=批量删除 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 批量删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO clear element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: id=searchTree [0m
+INFO     poium:logging.py:18 [32mINFO 🖋 input element: 左侧栏目树查询[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//i[@class=&#x27;fa fa-search&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 左侧查询按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//p[@id=&#x27;isShow_text&#x27;] [0m<br/></div></td></tr></tbody>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_case/information/test_9_virtual_column.py::test_end</td>
+          <td>
+            <html>
+              <head>
+                <meta name="Content-Type" value="text/html; charset=latin1"/></head>
+              <body>
+                <p>    ======虚拟栏目菜单结束测试.....=======</p>
+                <p></p>
+                <p>    </p></body></html></td>
+          <td class="col-duration">26.36</td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> -------------------------------Captured log call-------------------------------- <br/>INFO     poium:logging.py:18 [32mINFO ❓ Find 2 elements through: link text=虚拟栏目[0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 虚拟栏目菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//li[@id=&#x27;virtualColumnDelete&#x27;]//a[@class=&#x27;navitem&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 栏目树删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;dropdown-toggle user-menu&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 右上角头像[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//li[@class=&#x27;dropdown&#x27;]//li[1]//a[1] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 进入前台[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: link text=信息 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 信息菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//*[@id=&#x27;main-menu-inner&#x27;]/ul/li/ul/li[2]/a/span [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 栏目管理菜单[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//div[@id=&#x27;content-wrapper&#x27;]//a[4] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 栏目删除按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: class name=layui-layer-btn0 [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 确定按钮[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//a[@class=&#x27;dropdown-toggle user-menu&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 右上角头像[0m
+INFO     poium:logging.py:18 [32mINFO ✅ Find element: xpath=//li[@class=&#x27;ez-person-footer&#x27;] [0m
+INFO     poium:logging.py:18 [32mINFO 🖱 click element: 安全退出[0m<br/></div></td></tr></tbody></table></body></html>
