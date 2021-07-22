@@ -1,0 +1,8 @@
+{
+  "/flexbase/api/w/logon/login":{"type":"success"},
+  "/flexbase/api/w/portal/global/system/config":{"type":"success"},
+  "/flexbase/api/w/logon/setting/user/userinfo":{"type":"success"},
+  "/flexoffice/api/w/info/getInitList":{"type":"success"},
+  "/flexoffice/api/w/info/getColumnTree":{"type":"success"},
+  "/flexoffice/api/w/info/list":{"pageable":{"offset": 0}}
+}
